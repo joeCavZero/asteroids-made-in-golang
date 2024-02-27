@@ -13,9 +13,9 @@ type Player struct {
 	Health        int
 	Motion        rl.Vector2
 	Speed         float32
-	Shoots_slice  *[]Shoot
-	Shoot_sprite  *rl.Texture2D
-	Shoot_side    int
+	ShootsSlice   *[]Shoot
+	ShootSprite   *rl.Texture2D
+	NextShootSide int
 	ShootDebounce timer.Timer
 }
 
@@ -29,7 +29,7 @@ func NewPlayer(x float32, y float32, sprite *rl.Texture2D) Player {
 		Health:        5,
 		Motion:        rl.NewVector2(0, 0),
 		Speed:         105,
-		Shoot_side:    0,
+		NextShootSide: 0,
 		ShootDebounce: timer.NewTimer(),
 	}
 
@@ -89,18 +89,18 @@ func (p *Player) Draw() {
 //=========================================
 
 func (p *Player) Shoot(x float32, y float32) {
-	var new_shoot Shoot
+	var newShoot Shoot
 
-	switch p.Shoot_side {
+	switch p.NextShootSide {
 	case 0:
-		new_shoot = NewShoot(p.Position.X+2.0, p.Position.Y, p.Shoot_sprite)
-		p.Shoot_side = 1
+		newShoot = NewShoot(p.Position.X+2.0, p.Position.Y, p.ShootSprite)
+		p.NextShootSide = 1
 
 	case 1:
-		new_shoot = NewShoot(p.Position.X+p.Size.X-6.0, p.Position.Y, p.Shoot_sprite)
-		p.Shoot_side = 0
+		newShoot = NewShoot(p.Position.X+p.Size.X-6.0, p.Position.Y, p.ShootSprite)
+		p.NextShootSide = 0
 	}
 
-	*p.Shoots_slice = append(*p.Shoots_slice, new_shoot)
+	*p.ShootsSlice = append(*p.ShootsSlice, newShoot)
 
 }

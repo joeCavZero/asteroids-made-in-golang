@@ -11,14 +11,14 @@ import (
 )
 
 type Game struct {
-	Alien_slice []entities.Alien
-	Shoot_slice []entities.Shoot
-	Spawn_side  int
+	AlienSlice  []entities.Alien
+	ShootsSlice []entities.Shoot
+	SpawnSide   int
 }
 
 func NewGame() Game {
 	game := Game{}
-	game.Spawn_side = rand.Intn(2)
+	game.SpawnSide = rand.Intn(2)
 	return game
 }
 
@@ -31,47 +31,55 @@ func (g *Game) Init() {
 
 func (g *Game) GameLoop() {
 	//======== ASSETS ========
-	alienSprite := rl.LoadTexture("assets/alien.png")
-	playerSprite := rl.LoadTexture("assets/player.png")
-	shootSprite := rl.LoadTexture("assets/shoot.png")
-	naveMaeSprite := rl.LoadTexture("assets/nave-mae.png")
+	alienSprite := rl.LoadTexture("assets/images/alien.png")
+	playerSprite := rl.LoadTexture("assets/images/player.png")
+	shootSprite := rl.LoadTexture("assets/images/shoot.png")
+	naveMaeSprite := rl.LoadTexture("assets/images/nave-mae.png")
 	display := rl.LoadRenderTexture(settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT)
 
-	// ---- ALIEN CREATION ----
-
-	new_alien := entities.NewAlien(-32.0, 0.0, &alienSprite)
-
-	if g.Spawn_side == 0 {
-		new_alien.State = 1
-		new_alien.Position = rl.NewVector2(-32, 0)
-		new_alien.Target_position.X = 0
-	} else if g.Spawn_side == 1 {
-		new_alien.State = -1
-		new_alien.Position = rl.NewVector2(settings.WINDOW_WIDTH, 0)
-		new_alien.Target_position.X = settings.WINDOW_WIDTH - 32
-	}
-	g.Alien_slice = append(g.Alien_slice, new_alien)
-
 	player := entities.NewPlayer(settings.WINDOW_WIDTH/2, settings.WINDOW_HEIGHT-32, &playerSprite)
-	player.Shoot_sprite = &shootSprite
-	player.Shoots_slice = &g.Shoot_slice
+	player.ShootSprite = &shootSprite
+	player.ShootsSlice = &g.ShootsSlice
 
-	timer_ := timer.NewTimer()
+	alienTimer := timer.NewTimer()
+
 	// ---- MAIN LOOP ----
 	for !rl.WindowShouldClose() {
-
-		for i := 0; i < len(g.Alien_slice); i++ {
-			g.Alien_slice[i].Update()
+		// ============= UPDATE =============
+		if alienTimer.IsFinished() {
+			newAlien := entities.NewAlien(-32.0, 0.0, &alienSprite)
+			g.AlienSlice = slices.Insert(g.AlienSlice, len(g.AlienSlice), newAlien)
+			alienTimer.Start(3.0)
 		}
-		for i := 0; i < len(g.Shoot_slice); i++ {
-			g.Shoot_slice[i].Update()
 
-			if g.Shoot_slice[i].IsOutsideWindow() {
-				g.Shoot_slice = slices.Delete(g.Shoot_slice, i, i+1)
+		for i := 0; i < len(g.AlienSlice); i++ {
+			g.AlienSlice[i].Update()
+			if g.AlienSlice[i].Health <= 0 {
+
+				g.AlienSlice = slices.Delete(g.AlienSlice, i, i+1)
+			}
+			if len(g.AlienSlice) > 0 {
+				for j := 0; j < len(g.ShootsSlice); j++ {
+
+					if g.AlienSlice[i].IsCollidingWithShoot(&g.ShootsSlice[j]) {
+						g.AlienSlice[i].TakeDamage()
+
+						g.ShootsSlice = slices.Delete(g.ShootsSlice, j, j+1)
+					}
+				}
+			}
+		}
+		for i := 0; i < len(g.ShootsSlice); i++ {
+			g.ShootsSlice[i].Update()
+
+			if g.ShootsSlice[i].IsOutsideWindow() {
+				g.ShootsSlice = slices.Delete(g.ShootsSlice, i, i+1)
 
 			}
 		}
+		alienTimer.Update()
 		player.Update()
+
 		// ============= DRAWING ON DISPLAY =============
 		rl.BeginTextureMode(display)
 		rl.ClearBackground(rl.Black)
@@ -80,11 +88,11 @@ func (g *Game) GameLoop() {
 
 		player.Draw()
 
-		for i := 0; i < len(g.Alien_slice); i++ {
-			g.Alien_slice[i].Draw()
+		for i := 0; i < len(g.AlienSlice); i++ {
+			g.AlienSlice[i].Draw()
 		}
-		for i := 0; i < len(g.Shoot_slice); i++ {
-			g.Shoot_slice[i].Draw()
+		for i := 0; i < len(g.ShootsSlice); i++ {
+			g.ShootsSlice[i].Draw()
 		}
 
 		rl.EndTextureMode()
@@ -102,6 +110,11 @@ func (g *Game) GameLoop() {
 
 		rl.EndDrawing()
 	}
+
+	rl.UnloadTexture(alienSprite)
+	rl.UnloadTexture(playerSprite)
+	rl.UnloadTexture(shootSprite)
+	rl.UnloadTexture(naveMaeSprite)
 
 }
 

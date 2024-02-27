@@ -76,3 +76,13 @@ func (a *Alien) Update() {
 	}
 
 }
+func (a *Alien) IsCollidingWithShoot(shoot *Shoot) bool {
+	return rl.CheckCollisionRecs(
+		rl.NewRectangle(a.Position.X, a.Position.Y, a.Size.X, a.Size.Y),
+		rl.NewRectangle(shoot.Position.X, shoot.Position.Y, shoot.Size.X, shoot.Size.Y),
+	)
+}
+
+func (a *Alien) TakeDamage() {
+	a.Health--
+}
