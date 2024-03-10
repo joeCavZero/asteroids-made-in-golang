@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"math"
+	"project/src/settings"
 	"project/utils"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -16,6 +18,8 @@ type Player struct {
 	ShootSide          int
 	ShootTimerDebounce utils.Timer
 	ShootDebounceTime  float32
+
+	Life *int
 }
 
 func NewPlayer(x float32, y float32) Player {
@@ -86,6 +90,9 @@ func (p *Player) input() {
 func (p *Player) move() {
 	p.Position.X += p.Direction.X
 	p.Position.Y += p.Direction.Y
+
+	p.Position.X = float32(math.Max(0, math.Min(float64(p.Position.X), float64(float32(settings.WINDOW_WIDTH)-p.Size.X))))
+	p.Position.Y = float32(math.Max(0, math.Min(float64(p.Position.Y), float64(float32(settings.WINDOW_HEIGHT)-p.Size.Y))))
 }
 
 func (p *Player) CreateShoot() {
@@ -95,4 +102,8 @@ func (p *Player) CreateShoot() {
 
 	newShoot.Sprite = p.ShootSprite
 	*p.Shoots = append(*p.Shoots, &newShoot)
+}
+
+func (p *Player) TakeDamage(dmg int) {
+	*p.Life -= dmg
 }
